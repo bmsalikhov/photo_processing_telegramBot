@@ -7,9 +7,13 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import utils.PhotoMessageUtils;
+import utils.SomeFuncsForHomeWork;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,6 +45,15 @@ public class Bot extends TelegramLongPollingBot {
                     PhotoMessageUtils.processingImage(path, callData);
                     execute(preparePhotoMessage(path, chatId));
                 } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        } else if (update.hasMessage() && update.getMessage().hasText()) {
+            String chatId = update.getMessage().getChatId().toString();
+            if (update.getMessage().getText().equals("Расскажи о себе")) {
+                try {
+                    execute(SomeFuncsForHomeWork.IntroduceYourSelf(chatId));
+                } catch (TelegramApiException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -103,6 +116,15 @@ public class Bot extends TelegramLongPollingBot {
     private SendPhoto preparePhotoMessage(String localPath, long chatId) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
+
+        KeyboardButton keyboardButton = new KeyboardButton("Расскажи о себе");
+        ArrayList<KeyboardRow> keyboardRows = new ArrayList<>();
+        KeyboardRow keyboardRow = new KeyboardRow();
+        keyboardRow.add(keyboardButton);
+        keyboardRows.add(keyboardRow);
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setKeyboard(keyboardRows);
+        sendPhoto.setReplyMarkup(replyKeyboardMarkup);
         InputFile newFile = new InputFile();
         newFile.setMedia(new File(localPath));
         sendPhoto.setPhoto(newFile);
