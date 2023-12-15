@@ -1,3 +1,6 @@
+import commands.AppBotCommand;
+import commands.BotCommonCommands;
+import functions.FilterOperation;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -13,10 +16,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.Keyboard
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import utils.PhotoMessageUtils;
-import utils.SomeFuncsForHomeWork;
-
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,15 +47,6 @@ public class Bot extends TelegramLongPollingBot {
                     PhotoMessageUtils.processingImage(path, callData);
                     execute(preparePhotoMessage(path, chatId));
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        } else if (update.hasMessage() && update.getMessage().hasText()) {
-            String chatId = update.getMessage().getChatId().toString();
-            if (update.getMessage().getText().equals("Расскажи о себе")) {
-                try {
-                    execute(SomeFuncsForHomeWork.IntroduceYourSelf(chatId));
-                } catch (TelegramApiException e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -116,15 +109,7 @@ public class Bot extends TelegramLongPollingBot {
     private SendPhoto preparePhotoMessage(String localPath, long chatId) {
         SendPhoto sendPhoto = new SendPhoto();
         sendPhoto.setChatId(chatId);
-
-        KeyboardButton keyboardButton = new KeyboardButton("Расскажи о себе");
-        ArrayList<KeyboardRow> keyboardRows = new ArrayList<>();
-        KeyboardRow keyboardRow = new KeyboardRow();
-        keyboardRow.add(keyboardButton);
-        keyboardRows.add(keyboardRow);
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        replyKeyboardMarkup.setKeyboard(keyboardRows);
-        sendPhoto.setReplyMarkup(replyKeyboardMarkup);
+        sendPhoto.setReplyMarkup(getKeyboard());
         InputFile newFile = new InputFile();
         newFile.setMedia(new File(localPath));
         sendPhoto.setPhoto(newFile);
@@ -138,5 +123,41 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public String getBotUsername() {
         return "bulatjavabot";
+    }
+
+    private ReplyKeyboardMarkup getKeyboard() {
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        ArrayList<KeyboardRow> allKeyboardRows = new ArrayList<>();
+        //allKeyboardRows.addAll(getKeyboardRows(FilterOperation.class));
+        allKeyboardRows.addAll(getKeyboardRows(BotCommonCommands.class));
+
+        replyKeyboardMarkup.setKeyboard(allKeyboardRows);
+        replyKeyboardMarkup.setOneTimeKeyboard(true);
+        return replyKeyboardMarkup;
+    }
+
+    private ArrayList<KeyboardRow> getKeyboardRows(Class someClass) {
+        Method[] classMethods = someClass.getMethods();
+        ArrayList<AppBotCommand> commands = new ArrayList<>();
+        for (Method method : classMethods) {
+            if (method.isAnnotationPresent(AppBotCommand.class)) {
+                commands.add(method.getAnnotation(AppBotCommand.class));
+            }
+        }
+        ArrayList<KeyboardRow> keyboardRows = new ArrayList<>();
+        int columnCount = 3;
+        int rowsCount = commands.size() / columnCount + ((commands.size() % columnCount == 0) ? 0 : 1);
+        for (int rowIndex = 0; rowIndex < rowsCount ; rowIndex++) {
+            KeyboardRow row = new KeyboardRow();
+            for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
+                int index = rowIndex * columnCount + columnIndex;
+                if (index >= commands.size()) continue;
+                AppBotCommand command = commands.get(index);
+                KeyboardButton keyboardButton = new KeyboardButton(command.name());
+                row.add(keyboardButton);
+            }
+            keyboardRows.add(row);
+        }
+        return keyboardRows;
     }
 }
