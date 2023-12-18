@@ -5,18 +5,13 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.PhotoSize;
-import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.*;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import java.io.File;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -29,8 +24,16 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         Message message = update.getMessage();
-        String chatId = message.getChatId().toString();
         try {
+            SendMessage responseTextMessasge = runCommonCommand(message);
+            if (responseTextMessasge != null) {
+                execute(responseTextMessasge);
+                return;
+            }
+        } catch (InvocationTargetException | IllegalAccessException | TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+        /*try {
             String response = runCommand(message.getText());
             SendMessage sendMessage = new SendMessage();
             sendMessage.setChatId(chatId);
@@ -38,7 +41,7 @@ public class Bot extends TelegramLongPollingBot {
             execute(sendMessage);
         } catch (InvocationTargetException | IllegalAccessException | TelegramApiException e) {
             throw new RuntimeException(e);
-        }
+        }*/
         /*try {
             photoPaths = new ArrayList<>(PhotoMessageUtils.savePhotos(getFilesByMessage(message), Main.getToken()));
             for (String path : photoPaths) {
@@ -55,7 +58,8 @@ public class Bot extends TelegramLongPollingBot {
         }*/
     }
 
-    private String runCommand(String text) throws InvocationTargetException, IllegalAccessException {
+    private SendMessage runCommonCommand(Message message) throws InvocationTargetException, IllegalAccessException {
+        String text = message.getText();
         BotCommonCommands commands = new BotCommonCommands();
         Method[] classMethods = commands.getClass().getDeclaredMethods();
         for (Method method : classMethods) {
@@ -63,7 +67,13 @@ public class Bot extends TelegramLongPollingBot {
                 AppBotCommand command = method.getAnnotation(AppBotCommand.class);
                 if (command.name().equals(text)) {
                     method.setAccessible(true);
-                    return (String) method.invoke(commands);
+                    String responseText = (String) method.invoke(commands);
+                    if (responseText != null) {
+                        SendMessage sendMessage = new SendMessage();
+                        sendMessage.setChatId(message.getChatId());
+                        sendMessage.setText(responseText);
+                        return sendMessage;
+                    }
                 }
             }
         }
@@ -160,9 +170,9 @@ public class Bot extends TelegramLongPollingBot {
 
     }
 
-    private List<org.telegram.telegrambots.meta.api.objects.File> getFilesByMessage(Message message) {
+        private List<File> getFilesByMessage(Message message) {
         List<PhotoSize> photoSizes = message.getPhoto();
-        ArrayList<org.telegram.telegrambots.meta.api.objects.File> files = new ArrayList<>();
+        ArrayList<File> files = new ArrayList<>();
         for (PhotoSize photoSize : photoSizes) {
             final String fileId = photoSize.getFileId();
             try {
@@ -178,7 +188,7 @@ public class Bot extends TelegramLongPollingBot {
         sendPhoto.setChatId(chatId);
         sendPhoto.setReplyMarkup(getKeyboard());
         InputFile newFile = new InputFile();
-        newFile.setMedia(new File(localPath));
+        newFile.setMedia(new java.io.File(localPath));
         sendPhoto.setPhoto(newFile);
         return sendPhoto;
     }
