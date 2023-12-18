@@ -11,4 +11,9 @@ public class BotCommonCommands {
     public String bye() {
         return "Bye, User";
     }
+
+    @AppBotCommand(name = "/help", description = "when request help", showInKeyboard = true)
+    public String help() {
+        return "HEEELP";
+    }
 }

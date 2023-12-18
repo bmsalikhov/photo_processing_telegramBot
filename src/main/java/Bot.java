@@ -15,16 +15,83 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import utils.PhotoMessageUtils;
 import java.io.File;
-import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
     ArrayList<String> photoPaths;
+    Class[] commandClasses = new Class[] { BotCommonCommands.class };
+
     @Override
+    public void onUpdateReceived(Update update) {
+        Message message = update.getMessage();
+        String chatId = message.getChatId().toString();
+        try {
+            String response = runCommand(message.getText());
+            SendMessage sendMessage = new SendMessage();
+            sendMessage.setChatId(chatId);
+            sendMessage.setText(response);
+            execute(sendMessage);
+        } catch (InvocationTargetException | IllegalAccessException | TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+        /*try {
+            photoPaths = new ArrayList<>(PhotoMessageUtils.savePhotos(getFilesByMessage(message), Main.getToken()));
+            for (String path : photoPaths) {
+                try {
+                    String callData = "ЧБ";
+                    PhotoMessageUtils.processingImage(path, callData);
+                    execute(preparePhotoMessage(path, Long.parseLong(chatId)));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }*/
+    }
+
+    private String runCommand(String text) throws InvocationTargetException, IllegalAccessException {
+        BotCommonCommands commands = new BotCommonCommands();
+        Method[] classMethods = commands.getClass().getDeclaredMethods();
+        for (Method method : classMethods) {
+            if (method.isAnnotationPresent(AppBotCommand.class)) {
+                AppBotCommand command = method.getAnnotation(AppBotCommand.class);
+                if (command.name().equals(text)) {
+                    method.setAccessible(true);
+                    return (String) method.invoke(commands);
+                }
+            }
+        }
+        return null;
+    }
+
+    /*private String runCommand(String text) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
+        for (int i = 0; i < commandClasses.length; i++) {
+            Constructor<Class> constructor = Class.class.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            Class<?> instance = constructor.newInstance();
+            Method[] classMethods = instance.getClass().getDeclaredMethods();
+            for (Method method : classMethods) {
+                if (method.isAnnotationPresent(AppBotCommand.class)) {
+                    AppBotCommand command = method.getAnnotation(AppBotCommand.class);
+                    if (command.name().equals(text)) {
+                        method.setAccessible(true);
+                        return (String) method.invoke(instance);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }*/
+
+
+    /*@Override
     public void onUpdateReceived(Update update) {
         if (update.hasMessage() && update.getMessage().hasPhoto()) {
             String chatId = update.getMessage().getChatId().toString();
@@ -51,7 +118,7 @@ public class Bot extends TelegramLongPollingBot {
                 }
             }
         }
-    }
+    }*/
 
 
     private static SendMessage chooseImageFilter(String chatId) {
@@ -160,4 +227,6 @@ public class Bot extends TelegramLongPollingBot {
         }
         return keyboardRows;
     }
+
+
 }
