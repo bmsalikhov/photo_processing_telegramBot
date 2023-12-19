@@ -1,10 +1,17 @@
 package utils;
 
+import commands.AppBotCommand;
+import commands.BotCommonCommands;
+import functions.FilterOperation;
+import functions.ImageOperation;
+import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 
 public class ImageUtils {
     public static BufferedImage getImage(String path) throws IOException {
@@ -32,5 +39,19 @@ public class ImageUtils {
             return color.getRGB();
         }
         throw new Exception("invalid color");
+    }
+
+    public static ImageOperation getOperation(String operationName) {
+        FilterOperation filterOperations = new FilterOperation();
+        Method[] classMethods = filterOperations.getClass().getDeclaredMethods();
+        for (Method method : classMethods) {
+            if (method.isAnnotationPresent(AppBotCommand.class)) {
+                AppBotCommand command = method.getAnnotation(AppBotCommand.class);
+                if (command.name().equals(operationName)) {
+                    return (f) -> (float[]) method.invoke(filterOperations, f);
+                }
+            }
+        }
+        return null;
     }
 }
