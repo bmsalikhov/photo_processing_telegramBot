@@ -1,3 +1,5 @@
+package bot;
+
 import commands.AppBotCommand;
 import commands.BotCommonCommands;
 import functions.FilterOperation;
@@ -23,11 +25,8 @@ import java.util.HashMap;
 import java.util.List;
 
 public class Bot extends TelegramLongPollingBot {
-    ArrayList<String> photoPaths;
 
     HashMap<String, Message> messages = new HashMap<>();
-
-    Class[] commandClasses = new Class[] { BotCommonCommands.class };
 
     @Override
     public void onUpdateReceived(Update update) {
@@ -152,16 +151,6 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public String getBotUsername() {
         return "bulatjavabot";
-    }
-
-    private ReplyKeyboardMarkup getKeyboard() {
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        ArrayList<KeyboardRow> allKeyboardRows = new ArrayList<>();
-        allKeyboardRows.addAll(getKeyboardRows(BotCommonCommands.class));
-
-        replyKeyboardMarkup.setKeyboard(allKeyboardRows);
-        replyKeyboardMarkup.setOneTimeKeyboard(true);
-        return replyKeyboardMarkup;
     }
 
     private ArrayList<KeyboardRow> getKeyboardRows(Class someClass) {

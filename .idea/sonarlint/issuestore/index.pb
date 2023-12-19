@@ -17,3 +17,11 @@ F
 src/main/java/Bot.java,e\7\e7ac24cae316a1a6ebc42cbcee630680ee226271
 R
 "src/main/java/utils/RgbMaster.java,a\7\a732be579a3532fcae4845c765e336d65fcd2bc6
+J
+src/main/java/bot/Bot.java,a\f\af7604de95c9c4f1400fd12994b863da85560bd7
+K
+src/main/java/bot/Main.java,b\4\b4a5e9244c2d5c577592ac17c7cc0558baddf2e6
+S
+#.idea/sonarlint/issuestore/index.pb,9\f\9fe84ebb15faf917b7def6236dba604453cc61e0
+]
+-.idea/sonarlint/securityhotspotstore/index.pb,8\8\88a9255124c95bdc913197c120a8d560edc59c8e

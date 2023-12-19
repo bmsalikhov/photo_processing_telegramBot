@@ -17,3 +17,11 @@ S
 -src/main/java/commands/BotCommonCommands.java,7\b\7b951394dc54b3daea6e54c09ae0625f41ec37e5
 Y
 )src/main/java/commands/AppBotCommand.java,7\8\78e35073203b2c103816e5a75326254fe42a6c9a
+J
+src/main/java/bot/Bot.java,a\f\af7604de95c9c4f1400fd12994b863da85560bd7
+K
+src/main/java/bot/Main.java,b\4\b4a5e9244c2d5c577592ac17c7cc0558baddf2e6
+S
+#.idea/sonarlint/issuestore/index.pb,9\f\9fe84ebb15faf917b7def6236dba604453cc61e0
+]
+-.idea/sonarlint/securityhotspotstore/index.pb,8\8\88a9255124c95bdc913197c120a8d560edc59c8e

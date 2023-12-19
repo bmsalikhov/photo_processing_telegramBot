@@ -1,3 +1,5 @@
+package bot;
+
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.generics.BotSession;
@@ -24,7 +26,7 @@ public class Main {
                 throw new RuntimeException("Token value is null");
             }
         } catch (RuntimeException | IOException e) {
-            throw new RuntimeException("Bot initialization error: " + e.getMessage());
+            throw new RuntimeException("bot.Bot initialization error: " + e.getMessage());
         }
 
         TelegramBotsApi api = new TelegramBotsApi(DefaultBotSession.class);

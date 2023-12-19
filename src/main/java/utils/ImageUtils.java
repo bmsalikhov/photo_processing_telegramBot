@@ -1,10 +1,8 @@
 package utils;
 
 import commands.AppBotCommand;
-import commands.BotCommonCommands;
 import functions.FilterOperation;
 import functions.ImageOperation;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -48,7 +46,7 @@ public class ImageUtils {
             if (method.isAnnotationPresent(AppBotCommand.class)) {
                 AppBotCommand command = method.getAnnotation(AppBotCommand.class);
                 if (command.name().equals(operationName)) {
-                    return (f) -> (float[]) method.invoke(filterOperations, f);
+                    return f -> (float[]) method.invoke(filterOperations, f);
                 }
             }
         }
