@@ -1,17 +1,20 @@
 import commands.AppBotCommand;
 import commands.BotCommonCommands;
 import functions.FilterOperation;
+import functions.ImageOperation;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
+import org.telegram.telegrambots.meta.api.methods.send.SendMediaGroup;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.*;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.media.InputMedia;
+import org.telegram.telegrambots.meta.api.objects.media.InputMediaPhoto;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+import utils.PhotoMessageUtils;
+
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -25,37 +28,23 @@ public class Bot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         Message message = update.getMessage();
         try {
-            SendMessage responseTextMessasge = runCommonCommand(message);
-            if (responseTextMessasge != null) {
-                execute(responseTextMessasge);
+            SendMessage responseTextMessage = runCommonCommand(message);
+            if (responseTextMessage != null) {
+                execute(responseTextMessage);
                 return;
             }
         } catch (InvocationTargetException | IllegalAccessException | TelegramApiException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
-        /*try {
-            String response = runCommand(message.getText());
-            SendMessage sendMessage = new SendMessage();
-            sendMessage.setChatId(chatId);
-            sendMessage.setText(response);
-            execute(sendMessage);
-        } catch (InvocationTargetException | IllegalAccessException | TelegramApiException e) {
-            throw new RuntimeException(e);
-        }*/
-        /*try {
-            photoPaths = new ArrayList<>(PhotoMessageUtils.savePhotos(getFilesByMessage(message), Main.getToken()));
-            for (String path : photoPaths) {
-                try {
-                    String callData = "ЧБ";
-                    PhotoMessageUtils.processingImage(path, callData);
-                    execute(preparePhotoMessage(path, Long.parseLong(chatId)));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
+        try {
+            SendMediaGroup responseMediaMessage = runPhotoFilter(message);
+            if (responseMediaMessage != null) {
+                execute(responseMediaMessage);
+                return;
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }*/
+        } catch (TelegramApiException e) {
+            e.printStackTrace();
+        }
     }
 
     private SendMessage runCommonCommand(Message message) throws InvocationTargetException, IllegalAccessException {
@@ -80,97 +69,20 @@ public class Bot extends TelegramLongPollingBot {
         return null;
     }
 
-    /*private String runCommand(String text) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, InstantiationException {
-        for (int i = 0; i < commandClasses.length; i++) {
-            Constructor<Class> constructor = Class.class.getDeclaredConstructor();
-            constructor.setAccessible(true);
-            Class<?> instance = constructor.newInstance();
-            Method[] classMethods = instance.getClass().getDeclaredMethods();
-            for (Method method : classMethods) {
-                if (method.isAnnotationPresent(AppBotCommand.class)) {
-                    AppBotCommand command = method.getAnnotation(AppBotCommand.class);
-                    if (command.name().equals(text)) {
-                        method.setAccessible(true);
-                        return (String) method.invoke(instance);
-                    }
-                }
-            }
+    private SendMediaGroup runPhotoFilter(Message message) {
+        ImageOperation operation = FilterOperation::greyScale;
+        List<File> files = getFilesByMessage(message);
+        try {
+            List<String> paths = PhotoMessageUtils.savePhotos(files, Main.getToken());
+            Long chatId = message.getChatId();
+            return preparePhotoMessage(paths, operation, chatId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
-
-        return null;
-    }*/
-
-
-    /*@Override
-    public void onUpdateReceived(Update update) {
-        if (update.hasMessage() && update.getMessage().hasPhoto()) {
-            String chatId = update.getMessage().getChatId().toString();
-            try {
-                photoPaths = new ArrayList<>(PhotoMessageUtils.savePhotos(getFilesByMessage(update.getMessage()), Main.getToken()));
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            SendMessage chooseMessage = chooseImageFilter(chatId);
-            try {
-                execute(chooseMessage);
-            } catch (TelegramApiException e) {
-                throw new RuntimeException(e);
-            }
-        } else if (update.hasCallbackQuery()) {
-            String callData = update.getCallbackQuery().getData();
-            long chatId = update.getCallbackQuery().getMessage().getChatId();
-            for (String path : photoPaths) {
-                try {
-                    PhotoMessageUtils.processingImage(path, callData);
-                    execute(preparePhotoMessage(path, chatId));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-        }
-    }*/
-
-
-    private static SendMessage chooseImageFilter(String chatId) {
-        SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
-        sendMessage.setText("Выберите фильтр для обработки фото: ");
-
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-
-        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
-
-        List<InlineKeyboardButton> rowInLine1 = new ArrayList<>();
-        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
-        inlineKeyboardButton1.setText("Сепия");
-        inlineKeyboardButton1.setCallbackData("СЕПИЯ");
-        InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
-        inlineKeyboardButton2.setText("чб");
-        inlineKeyboardButton2.setCallbackData("ЧБ");
-        rowInLine1.add(inlineKeyboardButton1);
-        rowInLine1.add(inlineKeyboardButton2);
-
-        List<InlineKeyboardButton> rowInLine2 = new ArrayList<>();
-        InlineKeyboardButton inlineKeyboardButton3 = new InlineKeyboardButton();
-        inlineKeyboardButton3.setText("Только синий");
-        inlineKeyboardButton3.setCallbackData("ТОЛЬКО СИНИЙ");
-        InlineKeyboardButton inlineKeyboardButton4 = new InlineKeyboardButton();
-        inlineKeyboardButton4.setText("Только красный");
-        inlineKeyboardButton4.setCallbackData("ТОЛЬКО КРАСНЫЙ");
-        rowInLine2.add(inlineKeyboardButton3);
-        rowInLine2.add(inlineKeyboardButton4);
-
-        rowsInline.add(rowInLine1);
-        rowsInline.add(rowInLine2);
-
-        markupInline.setKeyboard(rowsInline);
-        sendMessage.setReplyMarkup(markupInline);
-
-        return sendMessage;
-
     }
 
-        private List<File> getFilesByMessage(Message message) {
+    private List<File> getFilesByMessage(Message message) {
         List<PhotoSize> photoSizes = message.getPhoto();
         ArrayList<File> files = new ArrayList<>();
         for (PhotoSize photoSize : photoSizes) {
@@ -183,14 +95,18 @@ public class Bot extends TelegramLongPollingBot {
         }
         return files;
     }
-    private SendPhoto preparePhotoMessage(String localPath, long chatId) {
-        SendPhoto sendPhoto = new SendPhoto();
-        sendPhoto.setChatId(chatId);
-        sendPhoto.setReplyMarkup(getKeyboard());
-        InputFile newFile = new InputFile();
-        newFile.setMedia(new java.io.File(localPath));
-        sendPhoto.setPhoto(newFile);
-        return sendPhoto;
+    private SendMediaGroup preparePhotoMessage(List<String> localPaths, ImageOperation operation, long chatId) throws Exception {
+        SendMediaGroup mediaGroup = new SendMediaGroup();
+        ArrayList<InputMedia> medias = new ArrayList<>();
+        for (String path : localPaths) {
+            InputMedia inputMedia = new InputMediaPhoto();
+            PhotoMessageUtils.processingImage(path, operation);
+            inputMedia.setMedia(new java.io.File(path), "path");
+            medias.add(inputMedia);
+        }
+        mediaGroup.setMedias(medias);
+        mediaGroup.setChatId(chatId);
+        return mediaGroup;
     }
 
     public Bot(String botToken) {

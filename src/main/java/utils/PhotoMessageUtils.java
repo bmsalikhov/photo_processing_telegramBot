@@ -1,6 +1,7 @@
 package utils;
 
 import functions.FilterOperation;
+import functions.ImageOperation;
 import org.telegram.telegrambots.meta.api.objects.File;
 
 import java.awt.image.BufferedImage;
@@ -40,15 +41,10 @@ public class PhotoMessageUtils {
         outputStream.close();
     }
 
-    public static void processingImage(String fileName, String filter) throws Exception {
+    public static void processingImage(String fileName, ImageOperation operation) throws Exception {
         final BufferedImage image = ImageUtils.getImage(fileName);
         final RgbMaster rgbMaster = new RgbMaster(image);
-        switch (filter) {
-            case "СЕПИЯ" -> rgbMaster.changeImage(FilterOperation::sepia);
-            case "ЧБ" -> rgbMaster.changeImage(FilterOperation::greyScale);
-            case "ТОЛЬКО СИНИЙ" -> rgbMaster.changeImage(FilterOperation::onlyBlue);
-            case "ТОЛЬКО КРАСНЫЙ" -> rgbMaster.changeImage(FilterOperation::onlyRed);
-        }
+        rgbMaster.changeImage(operation);
         ImageUtils.saveImage(rgbMaster.getImage(), fileName);
     }
 }

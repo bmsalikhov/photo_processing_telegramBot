@@ -1,0 +1,12 @@
+
+d
+java:S2095!"NUse try-with-resources or close this "FileOutputStream" in a "finally" clause.(¿÷¥
+d
+java:S2095 "IUse try-with-resources or close this "InputStream" in a "finally" clause.(û²ó˜üÿÿÿÿ
+P
+java:S1118":Add a private constructor to hide the implicit public one.(œˆ¸Ã
+3
+java:S2119"Save and re-use this "Random".(¼İÅf
+@
+java:S1874"+Remove this use of "URL"; it is deprecated.(–³¸,
+7	java:S131.""Add a default case to this switch.(Ôæı»
